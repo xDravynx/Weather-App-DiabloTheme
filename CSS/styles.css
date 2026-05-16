@@ -1,0 +1,235 @@
+:root {
+  --d4-bg: #0b0b0b;
+  --d4-panel: #1a1a1a;
+  --d4-panel-dark: #111;
+  --d4-border: #3a0000;
+  --d4-border-strong: #7a0a0a;
+
+  --d4-text: #e4d4b0;
+  --d4-text-light: #f2e9d8;
+  --d4-text-dim: #aaaaaa;
+
+  --d4-accent: #c41e3a;
+  --d4-accent-strong: #a30000;
+  --d4-accent-glow: #ff3b3b;
+
+  --d4-card-bg: #111;
+  --d4-card-border: #4a0000;
+
+  --d4-forecast-bg: #1a1a1a;
+  --d4-forecast-border: #3a0000;
+}
+
+/*
+   DIABLO IV HELLFIRE GLOW
+    */
+
+@keyframes hellfireGlow {
+  0% {
+    box-shadow:
+      0 0 10px #7a0a0a,
+      0 0 20px #3a0000,
+      0 0 40px #2a0000;
+    border-color: #7a0a0a;
+  }
+  50% {
+    box-shadow:
+      0 0 20px #c41e3a,
+      0 0 40px #a30000,
+      0 0 70px #ff3b3b;
+    border-color: #c41e3a;
+  }
+  100% {
+    box-shadow:
+      0 0 10px #7a0a0a,
+      0 0 20px #3a0000,
+      0 0 40px #2a0000;
+    border-color: #7a0a0a;
+  }
+}
+
+@keyframes emberFlicker {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.85;
+  }
+  70% {
+    opacity: 0.95;
+  }
+}
+
+/* Apply to any element */
+.diablo-glow {
+  animation:
+    hellfireGlow 3.5s infinite ease-in-out,
+    emberFlicker 1.8s infinite ease-in-out;
+}
+header {
+  text-align: center;
+  padding: 20px;
+  margin-bottom: 20px;
+  border-bottom: 2px solid var(--d4-border);
+}
+
+header h1 {
+  color: var(--d4-accent);
+  text-shadow: 0 0 10px var(--d4-accent-strong);
+}
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: url("https://www.transparenttextures.com/patterns/asfalt-light.png");
+  opacity: 0.08;
+  pointer-events: none;
+}
+
+body {
+  background: var(--d4-bg);
+  color: var(--d4-text);
+  font-family: "Cinzel", serif;
+}
+
+section {
+  margin: 20px auto;
+  max-width: 900px;
+}
+
+h3 {
+  position: relative;
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+h3::after {
+  content: "";
+  display: block;
+  width: 60px;
+  height: 2px;
+  background: var(--d4-accent);
+  margin: 8px auto 0;
+  box-shadow: 0 0 8px var(--d4-accent-glow);
+}
+
+#details {
+  background: var(--d4-panel);
+  border: 2px solid var(--d4-border);
+  padding: 15px;
+  border-radius: 10px;
+  margin-top: 20px;
+  box-shadow: 0 0 15px #2a0000;
+}
+
+/* Input and Form */
+input,
+select {
+  background: var(--d4-panel-dark);
+  border: 1px solid var(--d4-border);
+  color: var(--d4-text-light);
+  padding: 10px;
+  border-radius: 6px;
+}
+input:focus {
+  outline: none;
+  border-color: var(--d4-accent);
+  box-shadow: 0 0 10px var(--d4-accent-glow);
+}
+
+button {
+  background: var(--d4-accent);
+  color: var(--d4-text-light);
+  border: none;
+  padding: 10px 15px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: 0.2s;
+}
+
+button:hover {
+  background: var(--d4-accent-strong);
+}
+
+/* Current Weather panel */
+
+#currentWeather {
+  background: var(--d4-panel);
+  border: 2px solid var(--d4-border);
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 0 20px #2a0000;
+  animation: hellfireGlow 3s infinite ease-in-out;
+}
+
+#currentWeather img {
+  width: 60px;
+  height: 60px;
+}
+
+/* Forecast card styling */
+#forecast {
+  display: block;
+}
+#forecast-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 15px;
+  margin-top: 20px;
+}
+
+.forecast-card {
+  border: 1px solid #3a0000;
+  background: #1a1a1a;
+  border-radius: 10px;
+  padding: 12px;
+  animation:
+    hellfireGlow 4s infinite ease-in-out,
+    emberFlicker 2s infinite ease-in-out,
+    fadeIn 0.4s forwards;
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+@keyframes fadeIn {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.forecast-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 4px 12px var(--d4-accent-strong);
+}
+
+.forecast-card h4 {
+  color: var(--d4-accent);
+  text-shadow: 0 0 8px #5a0000;
+}
+.forecast-card img {
+  width: 60px;
+  height: 60px;
+}
+
+#windy {
+  border: 2px solid var(--d4-border);
+  border-radius: 10px;
+  box-shadow: 0 0 20px #2a0000;
+  margin-top: 20px;
+  overflow: hidden;
+}
+
+/* Mobile-Friendly */
+@media (max-width: 600px) {
+  #forecast-cards {
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  }
+
+  .forecast-card img {
+    width: 50px;
+    height: 50px;
+  }
+}

@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="CSS/styles.css" />
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    />
+    <title>Weather APP</title>
+  </head>
+  <body>
+    <header>
+      <h1>Weather App</h1>
+      <form>
+        <input type="search" id="cityInput" placeholder="Enter City" />
+        <button type="submit">Search</button>
+      </form>
+    </header>
+    <main>
+      <section id="currentWeather" class="diablo-glow">
+        <h3 id="cityName">City Name</h3>
+        <p id="temp">--°</p>
+        <p id="desc">Weather Description</p>
+        <figure>
+          <img id="weatherIcon" src="" alt="Weather Icon" />
+        </figure>
+        <div id="windy" style="width: 100%; height: 500px"></div>
+      </section>
+      <section id="details">
+        <p>Humidity: <span id="humidity">--%</span></p>
+        <p>Wind: <span id="wind">-- mph</span></p>
+        <p>Feels like: <span id="feels">--</span></p>
+      </section>
+      <section id="forecast" class="diablo-glow">
+        <h3>5-Day Forecast</h3>
+        <div id="forecast-cards"></div>
+      </section>
+    </main>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="JS/script.js" defer></script>
+  </body>
+</html>
