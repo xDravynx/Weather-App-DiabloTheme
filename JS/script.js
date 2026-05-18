@@ -192,7 +192,7 @@
 
     setBackground(data.desc);
 
-    loadRainViewer(data.lat, data.lon);
+    loadNOAARadar();
   }
 
   // Create Map
@@ -203,60 +203,22 @@
     maxZoom: 18,
   }).addTo(map);
 
-  let radarFrames = [];
-  let radarLayers = [];
-  let currentFrame = 0;
-  let animationTimer = null;
-  let isPlaying = false;
+  let noaaLayer = null;
 
-  function loadRainViewer(lat, lon) {
-    fetch("https://api.rainviewer.com/public/weather-maps.json")
-      .then((res) => res.json())
-      .then((data) => {
-        radarFrames = data.radar.past;
-        radarLayers = [];
+  function loadNOAARadar() {
+    if (noaaLayer) {
+      map.removeLayer(noaaLayer);
+    }
 
-        if (!radarFrames || radarFrames.length === 0) {
-          console.error("No radar frames available");
-          return;
-        }
+    noaaLayer = L.tileLayer(
+      "https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/nexrad-n0q/{z}/{x}/{y}.png",
+      {
+        tileSize: 256,
+        opacity: 0.6,
+        zIndex: 10,
+      },
+    );
 
-        // Removes old layers
-        radarLayers.forEach((layer) => map.removeLayer(layer));
-
-        // Builds tile layers for each frame
-        radarFrames.forEach((frame) => {
-          const timestamp = frame.time;
-
-          const tileUrl = `https://tilecache.rainviewer.com/v2/radar/${timestamp}/256/{z}/{x}/{y}/2/1_1.png`;
-
-          const layer = L.tileLayer(tileUrl, {
-            tileSize: 256,
-            opacity: 0, // start hidden
-            zIndex: 10,
-          });
-
-          radarLayers.push(layer);
-        });
-        radarLayers[0].setOpacity(0.6).addTo(map);
-
-        currentFrame = 0;
-
-        // Center map on searched city
-        map.setView([lat, lon], 7);
-
-        // Build controls
-        if (!document.getElementById("radar-controls")) {
-          createRadarControls();
-        }
-      });
-    // .catch(err => console.error("RainViewer error", err))
-  }
-  // Animation controls
-
-  function showFrame(index) {
-    radarLayers.forEach((layer, i) => {
-      layer.setOpacity(i === index ? 0.6 : 0);
-    });
+    noaaLayer.addTo(map);
   }
 })();
