@@ -14,7 +14,7 @@
 
   const forecastDiv = document.getElementById("forecast-cards");
 
-  const apiKey = "zpka_503affde7f394846be0ea625e699509f_5ac39e1e";
+  const apiKey = "zpka_4c13dce2aa194945859027b567b7d33c_8000ae50";
 
   // Create error + loading elements
   const errorMsg = document.createElement("p");
@@ -192,12 +192,16 @@
 
     setBackground(data.desc);
 
-    loadNOAARadar();
+    map.once("moveend", () => {
+      loadNOAARadar();
+    });
+    map.setView([data.lat, data.lon], 10);
+    // setTimeout(() => loadNOAARadar(), 150);
   }
 
   // Create Map
 
-  let map = L.map("windy").setView([32.4487, -99.7331], 7);
+  let map = L.map("windy").setView([32.4487, -99.7331], 10);
 
   L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
     maxZoom: 18,
@@ -220,5 +224,30 @@
     );
 
     noaaLayer.addTo(map);
+  }
+  // Auto-refresh radar every 2 minutes
+  let mapIsMoving = false;
+
+  map.on("movestart", () => {
+    mapIsMoving = true;
+  });
+
+  map.on("moveend", () => {
+    mapIsMoving = false;
+  });
+
+  setInterval(() => {
+    if (!mapIsMoving) {
+      loadNOAARadar();
+      pulseRadar();
+    }
+  }, 120000);
+
+  function pulseRadar() {
+    const windy = document.getElementById("windy");
+    windy.style.boxShadow = "0 0 25px #c41e3a";
+    setTimeout(() => {
+      windy.style.boxShadow = "";
+    }, 300);
   }
 })();

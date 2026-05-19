@@ -215,11 +215,31 @@ button:hover {
 }
 
 #windy {
+  height: 420px;
   border: 2px solid var(--d4-border);
   border-radius: 10px;
   box-shadow: 0 0 20px #2a0000;
   margin-top: 20px;
   overflow: hidden;
+}
+.divider {
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--d4-accent),
+    transparent
+  );
+  margin: 30px auto;
+  max-width: 900px;
+  box-shadow: 0 0 10px var(--d4-accent-glow);
+}
+#currentWeather,
+#details,
+.forecast-card {
+  background-image: url("https://www.transparenttextures.com/patterns/black-linen.png");
+  background-size: 300px;
+  opacity: 0.98;
 }
 
 /* Mobile-Friendly */
