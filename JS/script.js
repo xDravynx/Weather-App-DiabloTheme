@@ -16,7 +16,7 @@
 
   const apiKey = "zpka_4c13dce2aa194945859027b567b7d33c_8000ae50";
 
-  // Create error + loading elements
+  // Error + Loading
   const errorMsg = document.createElement("p");
   errorMsg.style.color = "red";
   errorMsg.style.fontWeight = "bold";
@@ -33,7 +33,6 @@
   function saveLastSearch(query) {
     localStorage.setItem("lastSearch", query);
   }
-  // Save last search (Auto-load on refresh)
 
   window.addEventListener("load", () => {
     const last = localStorage.getItem("lastSearch");
@@ -48,17 +47,14 @@
     }
   });
 
-  // Event Listener
   form.addEventListener("submit", handleSearch);
 
-  // Main Handler
   function handleSearch(e) {
     e.preventDefault();
 
     const query = input.value.trim();
     if (!query) return;
 
-    //Reset UI
     errorMsg.style.display = "none";
     spinner.style.display = "block";
 
@@ -70,7 +66,6 @@
           return;
         }
         updateUI(data);
-
         fetchForecast(data.locationKey).then(renderForecast);
       })
       .catch(() => {
@@ -81,7 +76,7 @@
     saveLastSearch(query);
   }
 
-  // Fetch function
+  // Fetch Weather
   function fetchWeather(query) {
     const cleanQuery = query.replace(/\s+/g, "");
     const isZip = /^\d{5}$/.test(cleanQuery);
@@ -121,7 +116,7 @@
       });
   }
 
-  // Fetch 5-day Forecast
+  // Fetch Forecast
   function fetchForecast(locationKey) {
     return fetch(
       `https://dataservice.accuweather.com/forecasts/v1/daily/5day/${locationKey}?apikey=${apiKey}&metric=false`,
@@ -130,7 +125,7 @@
       .then((data) => data.DailyForecasts);
   }
 
-  // Render 5-day Forecast
+  // Render Forecast
   function renderForecast(days) {
     forecastDiv.innerHTML = "";
 
@@ -144,7 +139,7 @@
       const card = document.createElement("div");
       card.className = "forecast-card";
       card.innerHTML = `
-       <h4>${date}</h4>
+        <h4>${date}</h4>
         <img src="https://www.accuweather.com/images/weathericons/${iconNum}.svg">
         <p>${day.Day.IconPhrase}</p>
         <p>High: ${day.Temperature.Maximum.Value}°F</p>
@@ -154,6 +149,8 @@
       forecastDiv.appendChild(card);
     });
   }
+
+  // Background Theme
   function setBackground(desc) {
     desc = desc.toLowerCase();
 
@@ -176,7 +173,8 @@
         "linear-gradient(180deg, #1a1a1a, #0b0b0b)";
     }
   }
-  //Update UI
+
+  // Update UI
   function updateUI(data) {
     cityName.textContent = data.name;
     temp.textContent = `${data.temp}°F`;
@@ -192,62 +190,123 @@
 
     setBackground(data.desc);
 
-    map.once("moveend", () => {
-      loadNOAARadar();
-    });
     map.setView([data.lat, data.lon], 10);
-    // setTimeout(() => loadNOAARadar(), 150);
   }
 
-  // Create Map
-
+  // Map
   let map = L.map("windy").setView([32.4487, -99.7331], 10);
 
   L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
     maxZoom: 18,
   }).addTo(map);
 
-  let noaaLayer = null;
+  // -----------------------------
+  // MRMS HYBRID RADAR (n0q + n0u)
+  // -----------------------------
 
-  function loadNOAARadar() {
-    if (noaaLayer) {
-      map.removeLayer(noaaLayer);
-    }
+  let radarFrames = [];
+  let currentFrameIndex = 0;
+  let radarTimer = null;
 
-    noaaLayer = L.tileLayer(
-      "https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/nexrad-n0q/{z}/{x}/{y}.png",
-      {
-        tileSize: 256,
-        opacity: 0.6,
-        zIndex: 10,
-      },
-    );
+  // Diablo Storm Colorizer
+  function applyStormColorizer(layer) {
+    const el = layer.getContainer();
+    if (!el) return;
 
-    noaaLayer.addTo(map);
+    el.style.filter = `
+      brightness(1.2)
+      saturate(2.5)
+      hue-rotate(-30deg)
+      contrast(1.4)
+    `;
   }
-  // Auto-refresh radar every 2 minutes
-  let mapIsMoving = false;
 
-  map.on("movestart", () => {
-    mapIsMoving = true;
-  });
+  // Fetch MRMS timestamps (correct endpoint)
+  function fetchMRMSTimestamps(callback) {
+    fetch("https://mesonet.agron.iastate.edu/json/mrms/n0q.json.php")
+      .then((res) => res.json())
+      .then((data) => callback(data.timestamps))
+      .catch(() => callback([]));
+  }
 
-  map.on("moveend", () => {
-    mapIsMoving = false;
-  });
+  function buildRadarFrames() {
+    radarFrames.forEach((frame) => {
+      map.removeLayer(frame.baseLayer);
+      map.removeLayer(frame.coreLayer);
+    });
+    radarFrames = [];
 
-  setInterval(() => {
-    if (!mapIsMoving) {
-      loadNOAARadar();
-      pulseRadar();
-    }
-  }, 120000);
+    fetchMRMSTimestamps(function (timestamps) {
+      timestamps.forEach((ts) => {
+        // Base reflectivity (n0q)
+        const baseLayer = L.tileLayer(
+          `https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/mrms/n0q/${ts}/{z}/{x}/{y}.png`,
+          {
+            tileSize: 256,
+            opacity: 0,
+            zIndex: 10,
+          },
+        );
 
+        // High‑res dual‑pol (n0u)
+        const coreLayer = L.tileLayer(
+          `https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/mrms/n0u/${ts}/{z}/{x}/{y}.png`,
+          {
+            tileSize: 256,
+            opacity: 0,
+            zIndex: 11,
+          },
+        );
+
+        baseLayer.on("load", () => applyStormColorizer(baseLayer));
+        coreLayer.on("load", () => applyStormColorizer(coreLayer));
+
+        radarFrames.push({ baseLayer, coreLayer });
+
+        baseLayer.addTo(map);
+        coreLayer.addTo(map);
+      });
+
+      currentFrameIndex = radarFrames.length - 1;
+      showRadarFrame(currentFrameIndex);
+    });
+  }
+
+  function showRadarFrame(index) {
+    radarFrames.forEach((frame, i) => {
+      const visible = i === index ? 0.75 : 0;
+      frame.baseLayer.setOpacity(visible);
+      frame.coreLayer.setOpacity(visible);
+    });
+  }
+
+  function stepRadarFrame() {
+    if (radarFrames.length === 0) return;
+
+    currentFrameIndex = (currentFrameIndex + 1) % radarFrames.length;
+    showRadarFrame(currentFrameIndex);
+    pulseRadar();
+  }
+
+  function startRadarAnimation() {
+    if (radarTimer) clearInterval(radarTimer);
+    radarTimer = setInterval(stepRadarFrame, 800);
+  }
+
+  function refreshRadarFrames() {
+    buildRadarFrames();
+  }
+
+  buildRadarFrames();
+  startRadarAnimation();
+
+  // Auto-refresh every 5 minutes
+  setInterval(refreshRadarFrames, 300000);
+
+  // Diablo Pulse
   function pulseRadar() {
     const windy = document.getElementById("windy");
     windy.style.boxShadow = "0 0 25px #c41e3a";
-    setTimeout(() => {
-      windy.style.boxShadow = "";
-    }, 300);
+    setTimeout(() => (windy.style.boxShadow = ""), 300);
   }
 })();
