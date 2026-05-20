@@ -221,11 +221,11 @@
     `;
   }
 
-  // Fetch MRMS timestamps (correct endpoint)
+  // Fetch MRMS timestamps
   function fetchMRMSTimestamps(callback) {
     fetch("https://mesonet.agron.iastate.edu/json/mrms/n0q.json.php")
       .then((res) => res.json())
-      .then((data) => callback(data.timestamps))
+      .then((data) => callback(data.timestamps.reverse()))
       .catch(() => callback([]));
   }
 
@@ -237,38 +237,39 @@
     radarFrames = [];
 
     fetchMRMSTimestamps(function (timestamps) {
+      let loadedCount = 0;
+
       timestamps.forEach((ts) => {
-        // Base reflectivity (n0q)
         const baseLayer = L.tileLayer(
           `https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/mrms/n0q/${ts}/{z}/{x}/{y}.png`,
-          {
-            tileSize: 256,
-            opacity: 0,
-            zIndex: 10,
-          },
+          { tileSize: 256, opacity: 0, zIndex: 10 },
         );
 
-        // High‑res dual‑pol (n0u)
         const coreLayer = L.tileLayer(
           `https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/mrms/n0u/${ts}/{z}/{x}/{y}.png`,
-          {
-            tileSize: 256,
-            opacity: 0,
-            zIndex: 11,
-          },
+          { tileSize: 256, opacity: 0, zIndex: 11 },
         );
 
-        baseLayer.on("load", () => applyStormColorizer(baseLayer));
-        coreLayer.on("load", () => applyStormColorizer(coreLayer));
+        const onLoad = () => {
+          loadedCount++;
+          applyStormColorizer(baseLayer);
+          applyStormColorizer(coreLayer);
+
+          if (loadedCount === timestamps.length * 2) {
+            currentFrameIndex = timestamps.length - 1;
+            showRadarFrame(currentFrameIndex);
+            startRadarAnimation();
+          }
+        };
+
+        baseLayer.on("load", onLoad);
+        coreLayer.on("load", onLoad);
 
         radarFrames.push({ baseLayer, coreLayer });
 
         baseLayer.addTo(map);
         coreLayer.addTo(map);
       });
-
-      currentFrameIndex = radarFrames.length - 1;
-      showRadarFrame(currentFrameIndex);
     });
   }
 
@@ -298,12 +299,9 @@
   }
 
   buildRadarFrames();
-  startRadarAnimation();
 
-  // Auto-refresh every 5 minutes
   setInterval(refreshRadarFrames, 300000);
 
-  // Diablo Pulse
   function pulseRadar() {
     const windy = document.getElementById("windy");
     windy.style.boxShadow = "0 0 25px #c41e3a";
