@@ -210,8 +210,8 @@ button:hover {
   text-shadow: 0 0 8px #5a0000;
 }
 .forecast-card img {
-  width: 60px;
-  height: 60px;
+  width: 75px;
+  height: 75px;
 }
 
 #windy {
@@ -220,7 +220,7 @@ button:hover {
   border-radius: 10px;
   box-shadow: 0 0 20px #2a0000;
   margin-top: 20px;
-  overflow: hidden;
+  overflow: clip;
 }
 .divider {
   height: 2px;
@@ -240,6 +240,14 @@ button:hover {
   background-image: url("https://www.transparenttextures.com/patterns/black-linen.png");
   background-size: 300px;
   opacity: 0.98;
+}
+
+/* styling for the new optional "Radar Time" */
+#radarTime {
+  text-align: center;
+  color: var(--d4-text-dim);
+  font-size: 0.9rem;
+  margin-top: 10px;
 }
 
 /* Mobile-Friendly */

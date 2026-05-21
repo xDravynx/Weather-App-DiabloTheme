@@ -201,110 +201,79 @@
   }).addTo(map);
 
   // -----------------------------
-  // MRMS HYBRID RADAR (n0q + n0u)
+  // NEW ANIMATED NEXRAD RADAR CODE
   // -----------------------------
 
   let radarFrames = [];
   let currentFrameIndex = 0;
   let radarTimer = null;
 
-  // Diablo Storm Colorizer
-  function applyStormColorizer(layer) {
-    const el = layer.getContainer();
-    if (!el) return;
-
-    el.style.filter = `
-      brightness(1.2)
-      saturate(2.5)
-      hue-rotate(-30deg)
-      contrast(1.4)
-    `;
-  }
-
-  // Fetch MRMS timestamps
-  function fetchMRMSTimestamps(callback) {
-    fetch("https://mesonet.agron.iastate.edu/json/mrms/n0q.json.php")
-      .then((res) => res.json())
-      .then((data) => callback(data.timestamps.reverse()))
-      .catch(() => callback([]));
-  }
+  const radarTimestamps = [
+    { label: "50 minutes ago", value: "900913-m50m" },
+    { label: "45 minutes ago", value: "900913-m45m" },
+    { label: "40 minutes ago", value: "900913-m40m" },
+    { label: "35 minutes ago", value: "900913-m35m" },
+    { label: "30 minutes ago", value: "900913-m30m" },
+    { label: "25 minutes ago", value: "900913-m25m" },
+    { label: "20 minutes ago", value: "900913-m20m" },
+    { label: "15 minutes ago", value: "900913-m15m" },
+    { label: "10 minutes ago", value: "900913-m10m" },
+    { label: "5 minutes ago", value: "900913-m05m" },
+    { label: "Current", value: "900913" },
+  ];
 
   function buildRadarFrames() {
-    radarFrames.forEach((frame) => {
-      map.removeLayer(frame.baseLayer);
-      map.removeLayer(frame.coreLayer);
-    });
-    radarFrames = [];
+    radarTimestamps.forEach((frame) => {
+      const radarLayer = L.tileLayer(
+        `https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/nexrad-n0q-${frame.value}/{z}/{x}/{y}.png`,
+        {
+          opacity: 0,
+          zIndex: 10,
+        },
+      );
 
-    fetchMRMSTimestamps(function (timestamps) {
-      let loadedCount = 0;
+      radarLayer.addTo(map);
 
-      timestamps.forEach((ts) => {
-        const baseLayer = L.tileLayer(
-          `https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/mrms/n0q/${ts}/{z}/{x}/{y}.png`,
-          { tileSize: 256, opacity: 0, zIndex: 10 },
-        );
-
-        const coreLayer = L.tileLayer(
-          `https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/mrms/n0u/${ts}/{z}/{x}/{y}.png`,
-          { tileSize: 256, opacity: 0, zIndex: 11 },
-        );
-
-        const onLoad = () => {
-          loadedCount++;
-          applyStormColorizer(baseLayer);
-          applyStormColorizer(coreLayer);
-
-          if (loadedCount === timestamps.length * 2) {
-            currentFrameIndex = timestamps.length - 1;
-            showRadarFrame(currentFrameIndex);
-            startRadarAnimation();
-          }
-        };
-
-        baseLayer.on("load", onLoad);
-        coreLayer.on("load", onLoad);
-
-        radarFrames.push({ baseLayer, coreLayer });
-
-        baseLayer.addTo(map);
-        coreLayer.addTo(map);
+      radarFrames.push({
+        layer: radarLayer,
+        label: frame.label,
       });
     });
+
+    showRadarFrame(0);
+    startRadarAnimation();
   }
 
   function showRadarFrame(index) {
     radarFrames.forEach((frame, i) => {
-      const visible = i === index ? 0.75 : 0;
-      frame.baseLayer.setOpacity(visible);
-      frame.coreLayer.setOpacity(visible);
+      if (i === index) {
+        frame.layer.setOpacity(0.75);
+      } else {
+        frame.layer.setOpacity(0);
+      }
     });
+
+    document.getElementById("radarTime").textContent =
+      `Radar time: ${radarFrames[index].label}`;
   }
 
   function stepRadarFrame() {
-    if (radarFrames.length === 0) return;
+    currentFrameIndex++;
 
-    currentFrameIndex = (currentFrameIndex + 1) % radarFrames.length;
+    if (currentFrameIndex >= radarFrames.length) {
+      currentFrameIndex = 0;
+    }
+
     showRadarFrame(currentFrameIndex);
-    pulseRadar();
   }
 
   function startRadarAnimation() {
-    if (radarTimer) clearInterval(radarTimer);
+    if (radarTimer) {
+      clearInterval(radarTimer);
+    }
+
     radarTimer = setInterval(stepRadarFrame, 800);
   }
 
-  function refreshRadarFrames() {
-    buildRadarFrames();
-  }
-
   buildRadarFrames();
-
-  setInterval(refreshRadarFrames, 300000);
-
-  function pulseRadar() {
-    const windy = document.getElementById("windy");
-    windy.style.boxShadow = "0 0 25px #c41e3a";
-    setTimeout(() => (windy.style.boxShadow = ""), 300);
-  }
 })();
